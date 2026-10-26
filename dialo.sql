@@ -2,7 +2,7 @@
 -- It creates the database and the users table Opal's signup/login pages use.
 
 CREATE DATABASE IF NOT EXISTS opal_mind CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-USE opal_mind;
+USE dialo;
 
 CREATE TABLE IF NOT EXISTS users (
   id INT AUTO_INCREMENT PRIMARY KEY,
