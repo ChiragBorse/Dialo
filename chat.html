@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Dialo – Chat</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script>
+(function(){var t=null;try{t=localStorage.getItem('Dialo-theme')}catch(e){}
+if(t!=='dark'&&t!=='light'){t=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'}
+document.documentElement.setAttribute('data-theme',t)})();
+</script>
+<style>
+:root{
+  --cream:#fbf4e9; --cream2:#f3e9d8; --card:#ffffff; --ink:#2c1e14; --muted:#7a6a5a;
+  --orange:#e8713a; --orange2:#f2925c; --olive:#90a861; --olive2:#7c9650;
+  --brown:#2b2018; --brown2:#352821; --line:rgba(43,32,24,.12);
+  --chip:#f3e9d8; --shadow:0 20px 50px -22px rgba(60,40,20,.3);
+  --sidebar:#2b2018; --sidebar-ink:#f3e8da; --sidebar-muted:#b9a894; --sidebar-hover:rgba(255,255,255,.07); --sidebar-active:rgba(232,113,58,.18);
+  --serif:"Fraunces",Georgia,serif; --sans:"Plus Jakarta Sans",system-ui,-apple-system,"Segoe UI",sans-serif; --mono:ui-monospace,Menlo,monospace;
+  box-sizing:border-box;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --cream:#211812; --cream2:#2a1f17; --card:#2c2119; --ink:#f3e8da; --muted:#c3ae99;
+    --line:rgba(243,232,218,.14); --chip:#3a2c21; --shadow:0 20px 50px -22px rgba(0,0,0,.6);
+    --sidebar:#17110c; --sidebar-hover:rgba(255,255,255,.06);
+  }
+}
+:root[data-theme="dark"]{
+  --cream:#211812; --cream2:#2a1f17; --card:#2c2119; --ink:#f3e8da; --muted:#c3ae99;
+  --line:rgba(243,232,218,.14); --chip:#3a2c21; --shadow:0 20px 50px -22px rgba(0,0,0,.6);
+  --sidebar:#17110c; --sidebar-hover:rgba(255,255,255,.06);
+}
+*,*::before,*::after{box-sizing:inherit}
+html,body{height:100%}
+body{margin:0;background:var(--cream);color:var(--ink);font-family:var(--sans);font-size:15.5px;line-height:1.55;overflow:hidden;-webkit-font-smoothing:antialiased;transition:background-color .4s,color .4s}
+a{color:inherit}
+:focus-visible{outline:3px solid var(--orange);outline-offset:2px;border-radius:8px}
+button{font-family:inherit}
+.app{display:grid;grid-template-columns:272px 1fr;height:100svh;min-height:0}
+
+/* ---------- SIDEBAR ---------- */
+.sidebar{background:var(--sidebar);color:var(--sidebar-ink);display:flex;flex-direction:column;padding:18px 14px;transition:transform .3s ease;min-height:0;overflow:hidden}
+.sb-top{display:flex;align-items:center;justify-content:space-between;padding:4px 8px 18px}
+.brand{display:flex;align-items:center;gap:9px;font-family:var(--serif);font-weight:700;font-size:19px}
+.gem{width:26px;height:26px;border-radius:50%;flex:none;background:conic-gradient(var(--orange),var(--olive),var(--orange2),var(--orange));box-shadow:0 3px 10px rgba(232,113,58,.4)}
+.sb-close{display:none;background:none;border:0;color:var(--sidebar-muted);cursor:pointer;padding:6px}
+.new-chat{display:flex;align-items:center;gap:10px;width:100%;padding:12px 14px;border-radius:14px;border:1px solid rgba(255,255,255,.14);
+  background:rgba(255,255,255,.04);color:var(--sidebar-ink);font:600 14.5px var(--sans);cursor:pointer;transition:background-color .2s,transform .2s,border-color .2s}
+.new-chat:hover{background:var(--sidebar-hover);transform:translateY(-1px);border-color:rgba(255,255,255,.25)}
+.new-chat .plus{width:20px;height:20px;border-radius:50%;background:var(--orange);display:grid;place-items:center;flex:none;font-size:14px;line-height:1}
+.sb-section{margin-top:22px;overflow-y:auto;overflow-x:hidden;flex:1;min-height:0;scrollbar-width:thin}
+.sb-label{padding:4px 12px 10px;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--sidebar-muted)}
+.chat-item{display:flex;align-items:center;gap:10px;padding:11px 12px;border-radius:12px;cursor:pointer;color:var(--sidebar-muted);font-size:14px;
+  transition:background-color .2s,color .2s;position:relative;opacity:0;transform:translateX(-8px);animation:slidein .4s ease forwards}
+@keyframes slidein{to{opacity:1;transform:none}}
+.chat-item:hover{background:var(--sidebar-hover);color:var(--sidebar-ink)}
+.chat-item.active{background:var(--sidebar-active);color:#fff}
+.chat-item .dotc{width:6px;height:6px;border-radius:50%;background:var(--orange);flex:none;opacity:0;transition:opacity .2s}
+.chat-item.active .dotc{opacity:1}
+.chat-item span.t{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1}
+.chat-item .del{opacity:0;background:none;border:0;color:var(--sidebar-muted);cursor:pointer;padding:3px;border-radius:6px;transition:opacity .2s,color .2s}
+.chat-item:hover .del{opacity:1}
+.chat-item .del:hover{color:#ff8f70}
+
+.sb-bottom{border-top:1px solid rgba(255,255,255,.1);padding-top:14px;display:flex;align-items:center;gap:10px}
+.avatar{width:36px;height:36px;border-radius:50%;background:var(--olive);color:#fff;display:grid;place-items:center;font-weight:700;font-size:14px;flex:none}
+.who{flex:1;min-width:0}
+.who b{display:block;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.who small{color:var(--sidebar-muted);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block}
+.icon-btn{background:none;border:0;color:var(--sidebar-muted);cursor:pointer;padding:8px;border-radius:10px;display:grid;place-items:center;transition:background-color .2s,color .2s,transform .3s}
+.icon-btn:hover{background:var(--sidebar-hover);color:#fff}
+
+/* ---------- MAIN ---------- */
+.main{display:flex;flex-direction:column;min-width:0;min-height:0;height:100%;background:var(--cream)}
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:14px 26px;border-bottom:1px solid var(--line)}
+.tb-left{display:flex;align-items:center;gap:12px}
+.menu-btn{display:none;background:none;border:0;color:var(--ink);cursor:pointer;padding:6px}
+.tb-title{font-family:var(--serif);font-weight:700;font-size:17px}
+.tb-sub{color:var(--muted);font-size:12.5px;display:flex;align-items:center;gap:6px}
+.tb-sub .dot{width:6px;height:6px;border-radius:50%;background:var(--olive);box-shadow:0 0 0 4px rgba(144,168,97,.2)}
+.theme-btn{position:relative;width:38px;height:38px;border-radius:50%;border:1px solid var(--line);background:var(--card);color:var(--ink);cursor:pointer;display:grid;place-items:center;transition:transform .3s,border-color .3s}
+.theme-btn:hover{transform:rotate(18deg) scale(1.06);border-color:var(--orange)}
+.theme-btn svg{grid-area:1/1;width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;transition:transform .6s cubic-bezier(.3,1.4,.5,1),opacity .35s}
+.theme-btn .sun{opacity:0;transform:rotate(-90deg) scale(.3)}
+:root[data-theme="dark"] .theme-btn .sun{opacity:1;transform:none}
+:root[data-theme="dark"] .theme-btn .moon{opacity:0;transform:rotate(90deg) scale(.3)}
+
+/* ---------- THREAD ---------- */
+.thread-wrap{flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;scroll-behavior:smooth}
+.thread{max-width:760px;margin:0 auto;padding:30px 26px 10px;display:flex;flex-direction:column;gap:22px}
+
+/* empty state */
+.empty{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:40px 20px;gap:18px}
+.empty .orb{width:74px;height:74px;border-radius:50%;background:radial-gradient(circle at 32% 28%,var(--orange2),var(--orange) 55%,#c75a28 100%);
+  box-shadow:0 20px 44px -14px rgba(232,113,58,.55);animation:floaty 6s ease-in-out infinite}
+@keyframes floaty{50%{transform:translateY(-10px)}}
+.empty h2{font-family:var(--serif);font-size:26px;margin:0}
+.empty p{color:var(--muted);max-width:28em}
+.suggest-row{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;max-width:620px}
+.suggest{padding:11px 18px;border-radius:999px;border:1px solid var(--line);background:var(--card);font-size:13.5px;cursor:pointer;color:var(--ink);
+  transition:transform .2s,border-color .2s;opacity:0;transform:translateY(10px);animation:rise .5s ease forwards}
+.suggest:hover{transform:translateY(-3px);border-color:var(--orange)}
+@keyframes rise{to{opacity:1;transform:none}}
+
+/* messages */
+.msg-row{display:flex;gap:14px;opacity:0;transform:translateY(10px);animation:msgin .4s cubic-bezier(.2,.8,.3,1) forwards}
+@keyframes msgin{to{opacity:1;transform:none}}
+.msg-row.user{flex-direction:row-reverse}
+.m-avatar{width:30px;height:30px;border-radius:50%;flex:none;display:grid;place-items:center;font-size:12px;font-weight:700;color:#fff}
+.m-avatar.ai{background:conic-gradient(var(--orange),var(--olive),var(--orange2),var(--orange))}
+.m-avatar.user{background:var(--olive)}
+.bubble{max-width:76%;padding:13px 17px;border-radius:18px;font-size:15.2px;line-height:1.58;white-space:pre-wrap;word-wrap:break-word}
+.msg-row.ai .bubble{background:var(--card);border:1px solid var(--line);border-bottom-left-radius:5px}
+.msg-row.user .bubble{background:var(--orange);color:#fff;border-bottom-right-radius:5px}
+.bubble.err{background:#fdeae3;color:#9a3412;border-color:#f3c3ab}
+:root[data-theme="dark"] .bubble.err{background:#3a2016;color:#ffb088;border-color:#5a3222}
+
+.typing-row{display:flex;gap:14px}
+.typing-bub{background:var(--card);border:1px solid var(--line);border-radius:18px;border-bottom-left-radius:5px;padding:14px 18px;display:inline-flex;gap:5px}
+.typing-bub span{width:7px;height:7px;border-radius:50%;background:var(--orange);opacity:.4;animation:bounce 1s infinite}
+.typing-bub span:nth-child(2){animation-delay:.15s}.typing-bub span:nth-child(3){animation-delay:.3s}
+@keyframes bounce{40%{transform:translateY(-5px);opacity:1}}
+
+/* composer */
+.composer-wrap{padding:16px 26px 20px;border-top:1px solid var(--line);background:var(--cream)}
+.composer{max-width:760px;margin:0 auto;display:flex;align-items:flex-end;gap:10px;background:var(--card);border:1.5px solid var(--line);
+  border-radius:22px;padding:10px 10px 10px 18px;transition:border-color .25s,box-shadow .25s}
+.composer:focus-within{border-color:var(--orange);box-shadow:0 0 0 4px rgba(232,113,58,.12)}
+.composer textarea{flex:1;border:0;outline:0;resize:none;background:transparent;color:var(--ink);font:500 15px var(--sans);max-height:160px;padding:8px 0;line-height:1.5}
+.composer textarea::placeholder{color:var(--muted)}
+.send-btn{width:40px;height:40px;border-radius:50%;border:0;background:var(--orange);color:#fff;display:grid;place-items:center;cursor:pointer;
+  flex:none;transition:transform .2s,background-color .2s,opacity .2s}
+.send-btn:hover{transform:scale(1.07)}
+.send-btn:disabled{opacity:.4;cursor:default;transform:none}
+.send-btn svg{width:18px;height:18px}
+.hint{text-align:center;color:var(--muted);font-size:12px;margin-top:10px}
+
+/* quota banner */
+.quota-banner{display:none;align-items:flex-start;gap:14px;margin:0 auto 18px;max-width:760px;width:100%;
+  background:linear-gradient(135deg,#fff4e5,#fde8d4);border:1.5px solid #f5b97a;border-radius:18px;
+  padding:18px 20px;box-shadow:0 6px 24px -8px rgba(200,80,20,.18);animation:msgin .4s ease forwards}
+.quota-banner .qb-icon{font-size:26px;flex:none;line-height:1}
+.quota-banner .qb-body{flex:1;min-width:0}
+.quota-banner .qb-title{font-weight:700;font-size:15.5px;color:#7c3a10;margin-bottom:4px}
+.quota-banner .qb-text{font-size:14px;color:#9a5220;line-height:1.5}
+.quota-banner .qb-time{display:inline-block;margin-top:10px;padding:7px 14px;border-radius:999px;
+  background:#e8713a;color:#fff;font-size:13px;font-weight:600;letter-spacing:.01em}
+:root[data-theme="dark"] .quota-banner{background:linear-gradient(135deg,#2e1d0e,#3a2310);border-color:#7a4520}
+:root[data-theme="dark"] .quota-banner .qb-title{color:#ffb882}
+:root[data-theme="dark"] .quota-banner .qb-text{color:#d4895a}
+
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:20}
+
+@media (max-width:860px){
+  .app{grid-template-columns:1fr}
+  .sidebar{position:fixed;inset:0 auto 0 0;width:272px;z-index:30;transform:translateX(-100%)}
+  .sidebar.open{transform:translateX(0)}
+  .sb-close{display:block}
+  .menu-btn{display:block}
+  .overlay.show{display:block}
+  .bubble{max-width:88%}
+}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation:none!important;transition:none!important}
+  .msg-row,.suggest,.chat-item{opacity:1;transform:none}
+}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <aside class="sidebar" id="sidebar">
+    <div class="sb-top">
+      <a href="index.html" class="brand"><span class="gem"></span>Dialo</a>
+      <button class="sb-close" id="sbClose" aria-label="Close menu">✕</button>
+    </div>
+
+    <button class="new-chat" id="newChatBtn"><span class="plus">+</span> New chat</button>
+
+    <div class="sb-section" id="chatList">
+      <div class="sb-label">Recent</div>
+      <!-- chat items injected by JS -->
+    </div>
+
+    <div class="sb-bottom">
+      <span class="avatar" id="sbAvatar">?</span>
+      <div class="who"><b id="sbName">Loading…</b><small id="sbEmail"></small></div>
+      <button class="icon-btn" id="logoutBtn" aria-label="Log out" title="Log out">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg>
+      </button>
+    </div>
+  </aside>
+
+  <div class="overlay" id="overlay"></div>
+
+  <div class="main">
+    <header class="topbar">
+      <div class="tb-left">
+        <button class="menu-btn" id="menuBtn" aria-label="Open menu">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
+        </button>
+        <div>
+          <div class="tb-title">Dialo</div>
+          <div class="tb-sub"><span class="dot"></span> Online</div>
+        </div>
+      </div>
+      <button class="theme-btn" id="themeBtn" aria-label="Switch theme">
+        <svg class="moon" viewBox="0 0 24 24"><path d="M21 12.8A9 9 0 1111.2 3a7 7 0 009.8 9.8z"/></svg>
+        <svg class="sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+      </button>
+    </header>
+
+    <div class="thread-wrap" id="threadWrap">
+      <div class="thread" id="thread">
+        <div class="empty" id="emptyState">
+          <div class="orb" aria-hidden="true"></div>
+          <h2>What's on your mind?</h2>
+          <p>Ask Dialo to explain something, help you write, plan your day, or just chat.</p>
+          <div class="suggest-row">
+            <button class="suggest" style="animation-delay:.05s">Explain quantum computing simply</button>
+            <button class="suggest" style="animation-delay:.12s">Help me write a resignation email</button>
+            <button class="suggest" style="animation-delay:.19s">Give me a 3-day study plan</button>
+            <button class="suggest" style="animation-delay:.26s">Debug this code for me</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="composer-wrap">
+      <!-- Quota exceeded banner -->
+      <div class="quota-banner" id="quotaBanner">
+        <div class="qb-icon">⏳</div>
+        <div class="qb-body">
+          <div class="qb-title">Daily API limit reached</div>
+          <div class="qb-text" id="quotaText">You've used up today's free API quota. Dialo will be back automatically once it resets.</div>
+          <span class="qb-time" id="quotaTime"></span>
+        </div>
+      </div>
+      <form class="composer" id="composerForm">
+        <textarea id="composerInput" rows="1" placeholder="Message Dialo…"></textarea>
+        <button type="submit" class="send-btn" id="sendBtn" disabled aria-label="Send message">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
+        </button>
+      </form>
+      <div class="hint">Dialo can make mistakes. Double-check important answers.</div>
+    </div>
+  </div>
+</div>
+
+<script>
+const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/* theme */
+document.getElementById('themeBtn').addEventListener('click',()=>{
+  const root=document.documentElement,next=root.getAttribute('data-theme')==='dark'?'light':'dark';
+  root.setAttribute('data-theme',next); try{localStorage.setItem('Dialo-theme',next)}catch(e){}
+});
+
+/* who am I (also gate the page) */
+fetch('whoami.php').then(r=>r.json()).then(d=>{
+  if(!d.ok){ window.location.href='login-signup.html'; return; }
+  document.getElementById('sbName').textContent=d.name;
+  document.getElementById('sbEmail').textContent=d.email;
+  document.getElementById('sbAvatar').textContent=d.name.trim().charAt(0).toUpperCase();
+}).catch(()=>{ document.getElementById('sbName').textContent='Offline'; });
+
+document.getElementById('logoutBtn').addEventListener('click',()=>{ window.location.href='logout.php'; });
+
+/* sidebar mobile toggle */
+const sidebar=document.getElementById('sidebar'),overlay=document.getElementById('overlay');
+function openSB(){ sidebar.classList.add('open'); overlay.classList.add('show'); }
+function closeSB(){ sidebar.classList.remove('open'); overlay.classList.remove('show'); }
+document.getElementById('menuBtn').addEventListener('click',openSB);
+document.getElementById('sbClose').addEventListener('click',closeSB);
+overlay.addEventListener('click',closeSB);
+
+/* ---------------- Chat state (stored per-browser in localStorage) ---------------- */
+const STORE_KEY='Dialo-chats';
+function loadChats(){ try{return JSON.parse(localStorage.getItem(STORE_KEY))||[]}catch(e){return []} }
+function saveChats(chats){ try{localStorage.setItem(STORE_KEY, JSON.stringify(chats))}catch(e){} }
+let chats = loadChats();
+let activeId = chats.length ? chats[0].id : null;
+
+function newChat(){
+  const chat = { id: 'c'+Date.now(), title: 'New chat', messages: [] };
+  chats.unshift(chat);
+  activeId = chat.id;
+  saveChats(chats);
+  renderSidebar();
+  renderThread();
+}
+function getActive(){ return chats.find(c=>c.id===activeId); }
+
+function renderSidebar(){
+  const list=document.getElementById('chatList');
+  list.innerHTML='<div class="sb-label">Recent</div>';
+  chats.forEach((c,i)=>{
+    const el=document.createElement('div');
+    el.className='chat-item'+(c.id===activeId?' active':'');
+    el.style.animationDelay=(i*0.04)+'s';
+    el.innerHTML='<span class="dotc"></span><span class="t"></span><button class="del" title="Delete" aria-label="Delete chat">✕</button>';
+    el.querySelector('.t').textContent=c.title;
+    el.addEventListener('click',(e)=>{ if(e.target.closest('.del'))return; activeId=c.id; renderSidebar(); renderThread(); closeSB(); });
+    el.querySelector('.del').addEventListener('click',(e)=>{
+      e.stopPropagation();
+      chats=chats.filter(x=>x.id!==c.id);
+      if(activeId===c.id){ activeId = chats.length? chats[0].id : null; }
+      saveChats(chats); renderSidebar(); renderThread();
+    });
+    list.appendChild(el);
+  });
+}
+
+function escapeHtml(s){ return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+function renderThread(){
+  const thread=document.getElementById('thread');
+  const chat=getActive();
+  thread.innerHTML='';
+  if(!chat || chat.messages.length===0){
+    thread.innerHTML=document.getElementById('emptyTemplate') ? '' : '';
+    thread.appendChild(buildEmptyState());
+    return;
+  }
+  chat.messages.forEach(m=>thread.appendChild(buildMsgRow(m.role,m.content)));
+  scrollToBottom();
+}
+
+function buildEmptyState(){
+  const div=document.createElement('div');
+  div.className='empty';
+  div.innerHTML=`
+    <div class="orb" aria-hidden="true"></div>
+    <h2>What's on your mind?</h2>
+    <p>Ask Dialo to explain something, help you write, plan your day, or just chat.</p>
+    <div class="suggest-row">
+      <button class="suggest" style="animation-delay:.05s">Explain quantum computing simply</button>
+      <button class="suggest" style="animation-delay:.12s">Help me write a resignation email</button>
+      <button class="suggest" style="animation-delay:.19s">Give me a 3-day study plan</button>
+      <button class="suggest" style="animation-delay:.26s">Debug this code for me</button>
+    </div>`;
+  div.querySelectorAll('.suggest').forEach(b=>b.addEventListener('click',()=>{
+    composerInput.value=b.textContent; composerInput.dispatchEvent(new Event('input')); sendMessage();
+  }));
+  return div;
+}
+
+function buildMsgRow(role,content,isError){
+  const row=document.createElement('div');
+  row.className='msg-row '+(role==='user'?'user':'ai');
+  const av=document.createElement('div');
+  av.className='m-avatar '+(role==='user'?'user':'ai');
+  av.textContent=role==='user' ? (document.getElementById('sbAvatar').textContent||'U') : '✦';
+  const bub=document.createElement('div');
+  bub.className='bubble'+(isError?' err':'');
+  bub.textContent=content;
+  row.appendChild(av); row.appendChild(bub);
+  return row;
+}
+
+function scrollToBottom(){
+  const wrap=document.getElementById('threadWrap');
+  requestAnimationFrame(()=>{ wrap.scrollTop = wrap.scrollHeight; });
+}
+
+/* ---------------- sending ---------------- */
+const composerForm=document.getElementById('composerForm');
+const composerInput=document.getElementById('composerInput');
+const sendBtn=document.getElementById('sendBtn');
+
+composerInput.addEventListener('input',()=>{
+  composerInput.style.height='auto';
+  composerInput.style.height=Math.min(composerInput.scrollHeight,160)+'px';
+  sendBtn.disabled = composerInput.value.trim()==='';
+});
+composerInput.addEventListener('keydown',(e)=>{
+  if(e.key==='Enter' && !e.shiftKey){ e.preventDefault(); if(!sendBtn.disabled) sendMessage(); }
+});
+composerForm.addEventListener('submit',(e)=>{ e.preventDefault(); sendMessage(); });
+
+async function sendMessage(){
+  const text=composerInput.value.trim();
+  if(!text)return;
+  if(!activeId){ newChat(); }
+  const chat=getActive();
+
+  if(chat.messages.length===0){
+    chat.title = text.length>36 ? text.slice(0,36)+'…' : text;
+  }
+  chat.messages.push({role:'user', content:text});
+  saveChats(chats);
+  renderSidebar();
+
+  const thread=document.getElementById('thread');
+  document.getElementById('emptyState')?.remove();
+  thread.appendChild(buildMsgRow('user', text));
+  scrollToBottom();
+
+  composerInput.value=''; composerInput.style.height='auto'; sendBtn.disabled=true;
+
+  const typingRow=document.createElement('div');
+  typingRow.className='typing-row';
+  typingRow.innerHTML='<div class="m-avatar ai">✦</div><div class="typing-bub"><span></span><span></span><span></span></div>';
+  thread.appendChild(typingRow);
+  scrollToBottom();
+
+  try{
+    const res=await fetch('chat_api.php',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({ messages: chat.messages })
+    });
+    const data=await res.json();
+    typingRow.remove();
+    if(data.ok){
+      hideQuotaBanner();
+      chat.messages.push({role:'assistant', content:data.reply});
+      saveChats(chats);
+      thread.appendChild(buildMsgRow('assistant', data.reply));
+    } else if(data.quota_exceeded){
+      showQuotaBanner(data.time_away, data.reset_label);
+    } else {
+      thread.appendChild(buildMsgRow('assistant', data.message || 'Something went wrong.', true));
+    }
+  } catch(err){
+    typingRow.remove();
+    thread.appendChild(buildMsgRow('assistant', "Couldn't reach the server. Make sure Apache/MySQL are running.", true));
+  }
+  scrollToBottom();
+}
+
+function showQuotaBanner(timeAway, resetLabel){
+  const banner=document.getElementById('quotaBanner');
+  const timeEl=document.getElementById('quotaTime');
+  const textEl=document.getElementById('quotaText');
+  textEl.textContent="You've used up today's free API quota. Dialo will be back once it resets.";
+  timeEl.textContent=`Resets in ${timeAway} — ${resetLabel}`;
+  banner.style.display='flex';
+  // Auto-hide if we somehow recover (user leaves and comes back after reset)
+  banner.scrollIntoView({behavior:'smooth', block:'nearest'});
+}
+
+function hideQuotaBanner(){
+  document.getElementById('quotaBanner').style.display='none';
+}
+
+document.getElementById('newChatBtn').addEventListener('click',newChat);
+
+/* init */
+if(!chats.length){ newChat(); } else { renderSidebar(); renderThread(); }
+</script>
+</body>
+</html>

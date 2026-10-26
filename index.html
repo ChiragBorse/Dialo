@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Dialo – Your AI chat assistant</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script>
+(function(){var t=null;try{t=localStorage.getItem('Dialo-theme')}catch(e){}
+if(t!=='dark'&&t!=='light'){t=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'}
+document.documentElement.setAttribute('data-theme',t)})();
+</script>
+<style>
+:root{
+  --cream:#fbf4e9; --cream2:#f3e9d8; --card:#ffffff; --ink:#2c1e14; --muted:#7a6a5a;
+  --orange:#e8713a; --orange2:#f2925c; --olive:#90a861; --olive2:#7c9650;
+  --brown:#2b2018; --brown2:#352821; --line:rgba(43,32,24,.12);
+  --chip:#f3e9d8; --shadow:0 30px 70px -28px rgba(60,40,20,.35);
+  --nav-bg:rgba(251,244,233,.78);
+  --serif:"Fraunces",Georgia,serif; --sans:"Plus Jakarta Sans",system-ui,-apple-system,"Segoe UI",sans-serif; --mono:"JetBrains Mono",ui-monospace,Menlo,monospace;
+  box-sizing:border-box; padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --cream:#211812; --cream2:#2a1f17; --card:#2c2119; --ink:#f3e8da; --muted:#c3ae99;
+    --line:rgba(243,232,218,.14); --chip:#3a2c21; --shadow:0 30px 70px -28px rgba(0,0,0,.6); --nav-bg:rgba(23,16,11,.78);
+  }
+}
+:root[data-theme="dark"]{
+  --cream:#211812; --cream2:#2a1f17; --card:#2c2119; --ink:#f3e8da; --muted:#c3ae99;
+  --line:rgba(243,232,218,.14); --chip:#3a2c21; --shadow:0 30px 70px -28px rgba(0,0,0,.6); --nav-bg:rgba(23,16,11,.78);
+}
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-behavior:smooth;scroll-padding-top:100px}
+body{margin:0;background:var(--cream);color:var(--ink);font-family:var(--sans);font-size:17px;line-height:1.6;overflow-x:hidden;-webkit-font-smoothing:antialiased;transition:background-color .4s,color .4s}
+a{color:inherit;text-decoration:none}
+h1,h2,h3{font-family:var(--serif);font-weight:600;line-height:1.05;letter-spacing:-.01em;margin:0}
+p{margin:0}
+:focus-visible{outline:3px solid var(--orange);outline-offset:3px;border-radius:10px}
+.wrap{width:min(1280px,100% - 48px);margin-inline:auto}
+.mono{font-family:var(--mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase}
+.screen{min-height:100svh;display:flex;flex-direction:column}
+
+/* progress + ambient */
+.progress{position:fixed;left:0;right:0;top:env(safe-area-inset-top,0px);height:3px;z-index:60;transform-origin:0 50%;transform:scaleX(0);background:linear-gradient(90deg,var(--orange),var(--olive))}
+.ambient{position:fixed;inset:0;z-index:-1;pointer-events:none;overflow:hidden}
+.ambient i{position:absolute;border-radius:50%;filter:blur(110px);opacity:.45;animation:driftbg 24s ease-in-out infinite alternate}
+.ambient i:nth-child(1){width:520px;height:520px;background:#f2c79b;left:-180px;top:-60px}
+.ambient i:nth-child(2){width:460px;height:460px;background:#c9d9a6;right:-160px;top:420px;animation-delay:-9s}
+:root[data-theme="dark"] .ambient i{opacity:.14}
+@keyframes driftbg{to{transform:translate(60px,-40px) scale(1.12)}}
+
+/* nav */
+.nav{position:fixed;left:50%;transform:translateX(-50%);top:calc(env(safe-area-inset-top,0px) + 14px);z-index:50;
+  width:min(1280px,100% - 32px);display:flex;align-items:center;justify-content:space-between;
+  padding:10px 10px 10px 22px;border-radius:999px;background:var(--nav-bg);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+  border:1px solid var(--line);transition:box-shadow .3s,background-color .4s,border-color .4s}
+.nav.scrolled{box-shadow:var(--shadow)}
+.brand{display:flex;align-items:center;gap:10px;font-family:var(--serif);font-size:23px;font-weight:600}
+.gem{width:30px;height:30px;border-radius:50%;flex:none;background:conic-gradient(var(--orange),var(--olive),var(--orange2),var(--orange));box-shadow:0 4px 14px rgba(232,113,58,.4)}
+.nav-links{display:flex;gap:30px;font-size:15.5px;color:var(--muted)}
+.nav-links a{position:relative;padding:6px 0;transition:color .2s}
+.nav-links a::after{content:"";position:absolute;left:0;bottom:0;height:2px;width:0;background:var(--orange);transition:width .25s}
+.nav-links a:hover{color:var(--ink)}.nav-links a:hover::after{width:100%}
+.nav-cta{display:flex;align-items:center;gap:8px}
+.theme-btn{position:relative;width:42px;height:42px;border-radius:50%;border:1px solid var(--line);background:var(--card);color:var(--ink);cursor:pointer;display:grid;place-items:center;transition:transform .3s,border-color .3s,background-color .4s}
+.theme-btn:hover{transform:rotate(18deg) scale(1.06);border-color:var(--orange)}
+.theme-btn svg{grid-area:1/1;width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;transition:transform .6s cubic-bezier(.3,1.4,.5,1),opacity .35s}
+.theme-btn .sun{opacity:0;transform:rotate(-90deg) scale(.3)}
+:root[data-theme="dark"] .theme-btn .sun{opacity:1;transform:none}
+:root[data-theme="dark"] .theme-btn .moon{opacity:0;transform:rotate(90deg) scale(.3)}
+.btn{display:inline-flex;align-items:center;gap:8px;border:0;cursor:pointer;font:600 16px/1 var(--sans);padding:15px 26px;border-radius:999px;position:relative;overflow:hidden;transition:transform .25s,box-shadow .25s}
+.btn span{position:relative;z-index:1}
+.btn-olive{background:var(--olive);color:#fff;box-shadow:0 14px 28px -10px rgba(124,150,80,.6)}
+.btn-olive:hover{transform:translateY(-2px)}
+.btn-orange{background:var(--orange);color:#fff;box-shadow:0 14px 28px -10px rgba(232,113,58,.6)}
+.btn-orange:hover{transform:translateY(-2px)}
+.btn-dark{background:var(--brown);color:#f3e8da}
+.btn-outline{background:var(--card);color:var(--ink);border:1px solid var(--line)}
+.btn-outline:hover{transform:translateY(-2px);border-color:var(--orange)}
+.btn-pill-sm{padding:10px 10px 10px 20px}
+.arr{display:inline-grid;place-items:center;width:30px;height:30px;border-radius:50%;background:rgba(255,255,255,.25);transition:transform .3s}
+.btn:hover .arr{transform:translateX(4px)}
+.btn-outline .arr{background:var(--chip);color:var(--ink)}
+
+/* magnetic ripple */
+.btn .ripple{position:absolute;border-radius:50%;background:rgba(255,255,255,.5);transform:scale(0);animation:ripple .6s ease-out forwards;pointer-events:none}
+@keyframes ripple{to{transform:scale(3);opacity:0}}
+
+/* seq */
+.seq{opacity:0;transform:translateY(22px);animation:rise .9s cubic-bezier(.2,.7,.2,1) forwards;animation-delay:calc(var(--d,0) * 1s)}
+@keyframes rise{to{opacity:1;transform:none}}
+.reveal{opacity:0;transform:translateY(28px);transition:opacity .9s ease,transform .9s cubic-bezier(.2,.7,.2,1);transition-delay:var(--rd,0s)}
+.reveal.in{opacity:1;transform:none}
+
+/* HERO */
+.hero{flex:1;display:flex;align-items:center;padding:150px 0 60px}
+.hero-grid{display:grid;grid-template-columns:.95fr 1.05fr;gap:50px;align-items:center}
+.sphere-wrap{position:relative;aspect-ratio:1/1;max-width:520px}
+.sphere{position:absolute;inset:4%;border-radius:50%;background:radial-gradient(circle at 32% 28%,var(--orange2),var(--orange) 55%,#c75a28 100%);
+  box-shadow:0 50px 100px -30px rgba(232,113,58,.6),inset -30px -40px 70px rgba(0,0,0,.18),inset 20px 20px 50px rgba(255,255,255,.25);
+  animation:floaty 7s ease-in-out infinite;transform:translate(calc(var(--px,0) * 1px),calc(var(--py,0) * 1px));transition:transform .35s ease-out}
+@keyframes floaty{50%{transform:translateY(-18px)}}
+.sphere-wrap .dot-ring{position:absolute;inset:-6%;border:1.5px dashed var(--line);border-radius:50%;animation:spin 50s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.badge-float{position:absolute;padding:11px 18px;border-radius:999px;background:var(--card);border:1px solid var(--line);box-shadow:var(--shadow);font-size:14px;font-weight:600;display:flex;align-items:center;gap:8px;animation:bob var(--t,6s) ease-in-out infinite;animation-delay:var(--dl,0s)}
+.badge-float::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--c,var(--orange))}
+.badge-float.b1{top:6%;right:-6%;--t:6.5s}
+.badge-float.b2{bottom:10%;left:-8%;--c:var(--olive);--t:7.5s;--dl:-2s}
+.badge-float.b3{bottom:38%;right:-10%;--c:#c7914a;--t:5.6s;--dl:-1s}
+@keyframes bob{50%{transform:translateY(-12px) rotate(-1.5deg)}}
+
+.eyebrow{display:inline-flex;align-items:center;gap:10px;color:var(--orange);background:var(--chip);padding:8px 16px;border-radius:999px}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--olive);box-shadow:0 0 0 5px rgba(144,168,97,.25);animation:pulse 2.4s ease-in-out infinite}
+@keyframes pulse{50%{box-shadow:0 0 0 9px rgba(144,168,97,0)}}
+.hero h1{font-size:clamp(44px,5.6vw,76px);margin:24px 0 22px}
+.hero h1 .grad{background:linear-gradient(90deg,var(--olive),var(--olive2));-webkit-background-clip:text;background-clip:text;color:transparent}
+.hero p.lead{font-size:clamp(17px,1.4vw,19px);color:var(--muted);max-width:30em}
+.hero-actions{display:flex;flex-wrap:wrap;gap:16px;margin-top:36px}
+
+/* word reveal */
+.w{display:inline-block;opacity:0;transform:translateY(.55em) rotate(3deg);transition:opacity .7s ease,transform .8s cubic-bezier(.2,.7,.2,1);transition-delay:calc(var(--wi,0) * .06s)}
+.split.in .w{opacity:1;transform:none}
+
+/* marquee */
+.marquee{padding:50px 0 0;overflow:hidden}
+.row{overflow:hidden;margin-top:14px;-webkit-mask-image:linear-gradient(90deg,transparent,#000 9%,#000 91%,transparent);mask-image:linear-gradient(90deg,transparent,#000 9%,#000 91%,transparent)}
+.track{display:flex;gap:14px;width:max-content;padding:6px 0;animation:scroll 50s linear infinite}
+.row.rev .track{animation-direction:reverse;animation-duration:62s}
+.row:hover .track{animation-play-state:paused}
+.pchip{white-space:nowrap;padding:12px 22px;border-radius:999px;background:var(--card);border:1px solid var(--line);font-size:15.5px;display:inline-flex;align-items:center;gap:10px;transition:transform .25s,border-color .25s}
+.pchip::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--orange)}
+.pchip:hover{transform:translateY(-4px);border-color:var(--orange)}
+@keyframes scroll{to{transform:translateX(-50%)}}
+
+/* SECTION 2: full-screen phone + chat */
+.sec{padding:140px 0}
+.center{text-align:center;margin-inline:auto}
+.h2{font-size:clamp(34px,4.2vw,54px)}
+.sub{color:var(--muted);font-size:18px;max-width:34em;margin:18px auto 0}
+.tag{display:inline-block;padding:7px 14px;border-radius:999px;background:var(--chip);color:var(--orange);font-family:var(--mono);font-size:11.5px;letter-spacing:.12em;text-transform:uppercase}
+
+.phone-split{display:grid;grid-template-columns:.85fr 1.15fr;gap:60px;align-items:center;margin-top:70px}
+.phone{position:relative;max-width:300px;margin-inline:auto;animation:floaty 8s ease-in-out infinite}
+.phone-body{background:var(--brown);border-radius:46px;padding:14px;box-shadow:var(--shadow)}
+.phone-screen{background:var(--cream2);border-radius:34px;padding:20px 16px;min-height:540px;display:flex;flex-direction:column}
+.phone-top{display:flex;justify-content:space-between;font-size:12px;color:var(--muted);padding:0 4px 14px}
+.phone-head{display:flex;align-items:center;gap:10px;padding-bottom:14px;border-bottom:1px solid var(--line)}
+.phone-head b{font-size:15px}
+.phone-msgs{flex:1;display:flex;flex-direction:column;gap:10px;padding-top:14px;overflow:hidden}
+.msg{max-width:84%;padding:10px 14px;border-radius:16px;font-size:13.5px;line-height:1.45;animation:pop .35s cubic-bezier(.2,.8,.3,1.2)}
+@keyframes pop{from{opacity:0;transform:translateY(8px) scale(.96)}}
+.msg.ai{background:var(--card);border-bottom-left-radius:5px;align-self:flex-start}
+.msg.me{background:var(--olive);color:#fff;border-bottom-right-radius:5px;align-self:flex-end}
+.typing{display:inline-flex;gap:5px;padding:12px 14px}
+.typing span{width:6px;height:6px;border-radius:50%;background:var(--orange);opacity:.4;animation:bounce 1s infinite}
+.typing span:nth-child(2){animation-delay:.15s}.typing span:nth-child(3){animation-delay:.3s}
+@keyframes bounce{40%{transform:translateY(-5px);opacity:1}}
+.caret::after{content:"";display:inline-block;width:2px;height:1em;background:var(--orange);margin-left:2px;vertical-align:-2px;animation:blink .8s steps(2) infinite}
+@keyframes blink{50%{opacity:0}}
+
+.feat-list{display:flex;flex-direction:column;gap:4px}
+.feat{display:flex;gap:20px;padding:26px 0;border-bottom:1px solid var(--line);cursor:default}
+.feat:last-child{border:0}
+.feat .n{font-family:var(--mono);font-size:13px;color:var(--orange);flex:none;padding-top:4px}
+.feat h3{font-size:22px;margin-bottom:8px;transition:transform .3s}
+.feat:hover h3{transform:translateX(6px)}
+.feat p{color:var(--muted);font-size:15.5px}
+
+/* SECTION 3: benefits card (dark olive, carousel-like) */
+.benefits{background:var(--olive2);border-radius:44px;overflow:hidden;color:#fff;display:grid;grid-template-columns:.9fr 1.1fr;box-shadow:var(--shadow)}
+.ben-left{padding:60px;display:flex;flex-direction:column;justify-content:space-between}
+.ben-left .mono{color:rgba(255,255,255,.65)}
+.ben-left h3{font-size:36px;color:#fff;margin-top:70px}
+.ben-nav{display:flex;gap:10px;margin-top:40px}
+.cbtn{width:46px;height:46px;border-radius:50%;border:1px solid rgba(255,255,255,.35);background:transparent;color:#fff;display:grid;place-items:center;cursor:pointer;transition:background-color .25s,transform .25s}
+.cbtn:hover{background:rgba(255,255,255,.15);transform:scale(1.06)}
+.ben-right{background:var(--brown2);padding:46px;display:flex;flex-direction:column;gap:16px;position:relative}
+.ben-count{position:absolute;top:28px;right:40px;font-family:var(--mono);font-size:12px;color:rgba(255,255,255,.55)}
+.bmsg{max-width:90%;padding:14px 18px;border-radius:18px;font-size:15px;line-height:1.5;opacity:0;transform:translateY(14px);transition:opacity .6s ease,transform .6s ease}
+.benefits.in .bmsg{opacity:1;transform:none}
+.benefits.in .bmsg:nth-child(2){transition-delay:.15s}
+.benefits.in .bmsg:nth-child(3){transition-delay:.3s}
+.benefits.in .bmsg:nth-child(4){transition-delay:.45s}
+.bmsg.me{align-self:flex-end;background:var(--orange);color:#fff;border-bottom-right-radius:5px}
+.bmsg.ai{align-self:flex-start;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.1);border-bottom-left-radius:5px}
+.bmsg ol{margin:8px 0 0;padding-left:18px}
+
+/* SECTION 4: benefit grid cards */
+.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:24px;margin-top:70px}
+.bcard{background:var(--card);border:1px solid var(--line);border-radius:28px;padding:34px 28px;position:relative;overflow:hidden;transition:transform .12s linear,border-color .3s,background-color .4s}
+.bcard::after{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;opacity:0;transition:opacity .35s;background:radial-gradient(360px circle at var(--mx,50%) var(--my,50%),rgba(232,113,58,.14),transparent 62%)}
+.bcard:hover::after{opacity:1}
+.bcard:hover{border-color:var(--orange)}
+.ico{width:50px;height:50px;border-radius:15px;background:var(--chip);color:var(--orange);display:grid;place-items:center;margin-bottom:20px;transition:transform .35s cubic-bezier(.3,1.5,.5,1)}
+.ico svg{width:26px;height:26px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;overflow:visible}
+.bcard:hover .ico{transform:translateY(-3px) rotate(-6deg) scale(1.08)}
+.bcard h3{font-size:19px;margin-bottom:8px}
+.bcard p{color:var(--muted);font-size:14.5px;line-height:1.5}
+.wr,.ck{stroke-dasharray:1;stroke-dashoffset:1;animation:wr 3.6s ease-in-out infinite}
+@keyframes wr{0%{stroke-dashoffset:1}30%,80%{stroke-dashoffset:0}100%{stroke-dashoffset:-1}}
+.sp{transform-origin:12px 12px;animation:sp 3.4s ease-in-out infinite}
+@keyframes sp{50%{transform:rotate(90deg) scale(1.18)}}
+.sh{animation:sh 3.4s ease-in-out infinite}
+@keyframes sh{0%,55%{transform:translateY(0)}65%,90%{transform:translateY(-2.5px)}100%{transform:translateY(0)}}
+
+/* SECTION 5: brand strip */
+.brand-strip{display:flex;align-items:center;justify-content:space-between;gap:30px;flex-wrap:wrap;margin-top:60px;padding:30px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.brand-strip span{font-family:var(--serif);font-size:20px;color:var(--muted);opacity:.7;transition:opacity .3s,color .3s}
+.brand-strip span:hover{opacity:1;color:var(--ink)}
+
+/* SECTION 6: dark CTA full screen */
+.night{margin-top:30px;padding:150px 0;color:#f3e8da;background:radial-gradient(1200px 500px at 30% 0%,#4a3626 0,rgba(74,54,38,0) 60%),linear-gradient(180deg,#352821 0%,#241a13 70%,#1c140e 100%);border-radius:50px 50px 0 0}
+.night .sub{color:#c3ae99}
+.night .eyebrow{background:rgba(255,255,255,.08);color:#f2b27f}
+.night h2 .grad{background:linear-gradient(90deg,#f2b27f,#e8713a);-webkit-background-clip:text;background-clip:text;color:transparent}
+.store-row{display:flex;gap:16px;justify-content:center;margin-top:40px;flex-wrap:wrap}
+
+footer{border-top:1px solid var(--line);padding:34px 0 46px;color:var(--muted);font-size:15px}
+.foot{display:flex;flex-wrap:wrap;gap:20px;justify-content:space-between;align-items:center}
+.foot nav{display:flex;gap:26px}
+.foot a:hover{color:var(--ink)}
+
+@media (max-width:980px){
+  .hero-grid{grid-template-columns:1fr}
+  .phone-split{grid-template-columns:1fr}
+  .benefits{grid-template-columns:1fr}
+  .grid4{grid-template-columns:1fr 1fr}
+  .nav-links{display:none}
+  .sphere-wrap{max-width:380px;margin-inline:auto}
+  .night{border-radius:34px 34px 0 0}
+}
+@media (max-width:560px){
+  .wrap{width:calc(100% - 28px)}
+  .grid4{grid-template-columns:1fr}
+  .hero{padding-top:120px}
+  .ben-left,.ben-right{padding:30px}
+  .badge-float{display:none}
+  .sec{padding:90px 0}
+}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation:none!important;transition:none!important}
+  .seq,.reveal,.w,.bmsg{opacity:1;transform:none}
+}
+</style>
+</head>
+<body>
+<div class="progress" id="progress" aria-hidden="true"></div>
+<div class="ambient" aria-hidden="true"><i></i><i></i></div>
+
+<header class="nav" id="nav">
+  <a href="#top" class="brand"><span class="gem"></span>Dialo</a>
+  <nav class="nav-links">
+    <a href="#home">Homepage</a><a href="#modes">Platform</a><a href="#benefits">About Us</a><a href="#faq">Contact Us</a>
+  </nav>
+  <div class="nav-cta">
+    <button class="theme-btn" id="themeBtn" type="button" aria-label="Switch theme">
+      <svg class="moon" viewBox="0 0 24 24"><path d="M21 12.8A9 9 0 1111.2 3a7 7 0 009.8 9.8z"/></svg>
+      <svg class="sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+    </button>
+    <a class="btn btn-olive" href="login-signup.html#signup"><span>Sign Up</span><span class="arr">→</span></a>
+    <a class="btn btn-orange" href="login-signup.html#login"><span>Login</span></a>
+  </div>
+</header>
+
+<main id="top">
+<section class="hero screen" id="home">
+  <div class="wrap hero-grid">
+    <div class="sphere-wrap seq" style="--d:.2" aria-hidden="true">
+      <div class="dot-ring"></div>
+      <div class="sphere"></div>
+      <div class="badge-float b1"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v4M12 18v4M4.9 4.9l2.8 2.8M16.3 16.3l2.8 2.8M2 12h4M18 12h4M4.9 19.1l2.8-2.8M16.3 7.7l2.8-2.8"/></svg> Instant answers</div>
+      <div class="badge-float b2">Try Demo →</div>
+      <div class="badge-float b3">98% helpful</div>
+    </div>
+    <div>
+      <div class="eyebrow seq" style="--d:.3"><span class="dot"></span><span class="mono">AI chat assistant</span></div>
+      <h1 class="seq" style="--d:.42">Clear answers.<br>Real <span class="grad">conversation.</span></h1>
+      <p class="lead seq" style="--d:.56">Dialo is your everyday AI companion — ask it to explain, write, plan or code, and get thoughtful replies shaped around how you actually talk.</p>
+      <div class="hero-actions seq" style="--d:.7">
+        <a class="btn btn-orange" href="#"><span>Try Demo</span><span class="arr">→</span></a>
+        <a class="btn btn-outline" href="#modes"><span>See how it works</span></a>
+      </div>
+    </div>
+  </div>
+
+  <div class="marquee wrap seq" style="--d:.9">
+    <div class="row"><div class="track" id="t1"></div></div>
+    <div class="row rev"><div class="track" id="t2"></div></div>
+  </div>
+</section>
+
+<!-- PHONE + FEATURES -->
+<section class="sec" id="modes">
+  <div class="wrap">
+    <div class="center reveal" style="max-width:640px">
+      <span class="tag">Dialo Platform</span>
+      <h2 class="h2" style="margin-top:18px">Intelligent chat, <em style="font-style:italic;color:var(--orange)">built around you</em></h2>
+    </div>
+
+    <div class="phone-split">
+      <div class="phone reveal">
+        <div class="phone-body">
+          <div class="phone-screen">
+            <div class="phone-top"><span>9:41</span><span>●●●</span></div>
+            <div class="phone-head">
+              <span class="gem" style="width:26px;height:26px"></span>
+              <div><b>Dialo</b></div>
+            </div>
+            <div class="phone-msgs" id="phoneMsgs"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="feat-list reveal" style="--rd:.1">
+        <div class="feat"><span class="n">01</span><div><h3>Ask naturally</h3><p>Type the way you'd talk to a friend — Dialo picks up context and intent, not just keywords.</p></div></div>
+        <div class="feat"><span class="n">02</span><div><h3>Get grounded replies</h3><p>Answers are structured and easy to scan, with the reasoning shown when you need it.</p></div></div>
+        <div class="feat"><span class="n">03</span><div><h3>Keep the thread</h3><p>Dialo remembers what you discussed earlier in the chat, so follow-ups just work.</p></div></div>
+        <div class="feat"><span class="n">04</span><div><h3>Stay in control</h3><p>Switch to a private chat anytime, or export and clear your history whenever you like.</p></div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- BENEFITS DARK CARD -->
+<section class="sec" id="benefits" style="padding-top:0">
+  <div class="wrap">
+    <div class="benefits reveal" id="benefitsCard">
+      <div class="ben-left">
+        <div>
+          <span class="mono">01/10</span>
+          <h3>Dialo AI<br>Chatbot Benefits</h3>
+        </div>
+        <div class="ben-nav">
+          <button class="cbtn" id="benPrev" aria-label="Previous">←</button>
+          <button class="cbtn" id="benNext" aria-label="Next">→</button>
+        </div>
+      </div>
+      <div class="ben-right">
+        <span class="ben-count">552 total conversations. See All</span>
+        <div class="bmsg me">Hey Dialo, what are the 3 main benefits of chatting with an AI assistant?</div>
+        <div class="bmsg ai">Sure! Here are the top three:
+          <ol><li>Personalized help, any time of day</li><li>Fast, clear explanations on hard topics</li><li>A private space to think things through</li></ol>
+        </div>
+        <div class="bmsg me">That sounds great — can Dialo help with my studies too?</div>
+        <div class="bmsg ai">You're welcome! Remember, Dialo is here to support your learning, work and everyday questions, big or small. 🌿</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- BENEFIT GRID -->
+<section class="sec" style="padding-top:40px">
+  <div class="wrap">
+    <div class="center reveal" style="max-width:600px">
+      <span class="tag">Why Dialo</span>
+      <h2 class="h2" style="margin-top:18px">Everything you need in one chat</h2>
+      <p class="sub">Simple tools that stay out of your way, so the conversation always comes first.</p>
+    </div>
+    <div class="grid4">
+      <div class="bcard reveal"><span class="ico"><svg viewBox="0 0 24 24"><path class="wr" pathLength="1" d="M4 7h16"/><path class="wr" pathLength="1" style="animation-delay:.25s" d="M4 12h12"/><path class="wr" pathLength="1" style="animation-delay:.5s" d="M4 17h8"/></svg></span><h3>Clear writing</h3><p>Drafts, edits and rewrites in a tone that sounds like you.</p></div>
+      <div class="bcard reveal" style="--rd:.08s"><span class="ico"><svg viewBox="0 0 24 24"><path class="sp" d="M12 3l2.2 5.8L20 11l-5.8 2.2L12 19l-2.2-5.8L4 11l5.8-2.2z"/></svg></span><h3>Self discovery</h3><p>Ask any question, however basic, and get a patient, clear answer.</p></div>
+      <div class="bcard reveal" style="--rd:.16s"><span class="ico"><svg viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="9" rx="2"/><path class="sh" d="M8 11V8a4 4 0 018 0v3"/></svg></span><h3>Private by choice</h3><p>Start a temporary chat that leaves nothing behind when you close it.</p></div>
+      <div class="bcard reveal" style="--rd:.24s"><span class="ico"><svg viewBox="0 0 24 24"><path class="ck" pathLength="1" d="M3 6l2 2 3-3"/><path d="M12 7h9"/><path class="ck" pathLength="1" style="animation-delay:.4s" d="M3 12l2 2 3-3"/><path d="M12 13h9"/><path class="ck" pathLength="1" style="animation-delay:.8s" d="M3 18l2 2 3-3"/><path d="M12 19h9"/></svg></span><h3>Tailored resources</h3><p>Follow-up suggestions and resources that match what you asked.</p></div>
+    </div>
+
+    <div class="brand-strip reveal">
+      <span>Google</span><span>Meta</span><span>Amazon</span><span>Notion</span><span>Spotify</span><span>YouTube</span>
+    </div>
+  </div>
+</section>
+
+<!-- CTA / night -->
+<section class="night" id="faq">
+  <div class="wrap center reveal">
+    <span class="eyebrow"><span class="dot"></span><span class="mono">Free to start</span></span>
+    <h2 class="h2" style="margin-top:22px">Start your <span class="grad">Dialo</span> journey today</h2>
+    <p class="sub">Download the app or jump straight into a chat in your browser — no setup needed.</p>
+    <div class="store-row">
+      <a class="btn btn-olive" href="#"><span>Apple Store</span><span class="arr">→</span></a>
+      <a class="btn btn-orange" href="#"><span>Google Play</span><span class="arr">→</span></a>
+    </div>
+  </div>
+</section>
+</main>
+
+<footer>
+  <div class="wrap foot">
+    <a href="#top" class="brand" style="font-size:20px"><span class="gem" style="width:24px;height:24px"></span>Dialo</a>
+    <nav><a href="#home">Homepage</a><a href="#modes">Platform</a><a href="#benefits">About Us</a><a href="#faq">Contact Us</a></nav>
+    <span>© 2026 Dialo. Built as a learning project.</span>
+  </div>
+</footer>
+
+<script>
+const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+const io=new IntersectionObserver((es)=>{es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target);}})},{threshold:.18});
+document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
+document.getElementById('benefitsCard') && io.observe(document.getElementById('benefitsCard'));
+
+/* theme toggle */
+document.getElementById('themeBtn').addEventListener('click',()=>{
+  const root=document.documentElement,next=root.getAttribute('data-theme')==='dark'?'light':'dark';
+  root.setAttribute('data-theme',next); try{localStorage.setItem('Dialo-theme',next)}catch(e){}
+});
+
+/* nav scroll + progress */
+const nav=document.getElementById('nav'),bar=document.getElementById('progress');
+let ticking=false;
+function onScroll(){
+  nav.classList.toggle('scrolled',scrollY>20);
+  const max=document.documentElement.scrollHeight-innerHeight;
+  bar.style.transform='scaleX('+(max>0?Math.min(scrollY/max,1):0)+')';
+  ticking=false;
+}
+addEventListener('scroll',()=>{if(!ticking){ticking=true;requestAnimationFrame(onScroll);}},{passive:true});
+onScroll();
+
+/* headline word reveal */
+function splitWords(node,c){
+  [...node.childNodes].forEach(n=>{
+    if(n.nodeType===3){
+      const f=document.createDocumentFragment();
+      n.textContent.split(/(\s+)/).forEach(part=>{
+        if(!part)return;
+        if(/^\s+$/.test(part)){f.append(part);}
+        else{const s=document.createElement('span');s.className='w';s.style.setProperty('--wi',c.i++);s.textContent=part;f.append(s);}
+      });
+      n.replaceWith(f);
+    } else if(n.nodeType===1){ splitWords(n,c); }
+  });
+}
+document.querySelectorAll('.hero h1, .h2').forEach(h=>{h.classList.add('split');splitWords(h,{i:0});io.observe(h);});
+
+/* card spotlight */
+if(!reduce){
+  document.querySelectorAll('.bcard').forEach(el=>{
+    el.addEventListener('pointermove',e=>{
+      if(e.pointerType==='touch')return;
+      const r=el.getBoundingClientRect();
+      el.style.setProperty('--mx',((e.clientX-r.left)/r.width*100)+'%');
+      el.style.setProperty('--my',((e.clientY-r.top)/r.height*100)+'%');
+    });
+  });
+  /* sphere follows mouse */
+  const sphereWrap=document.querySelector('.sphere-wrap'),hero=document.querySelector('.hero');
+  if(sphereWrap&&matchMedia('(pointer:fine)').matches){
+    hero.addEventListener('pointermove',e=>{
+      const r=hero.getBoundingClientRect();
+      sphereWrap.style.setProperty('--px',((e.clientX-r.left)/r.width-.5)*30);
+      sphereWrap.style.setProperty('--py',((e.clientY-r.top)/r.height-.5)*30);
+    });
+    hero.addEventListener('pointerleave',()=>{sphereWrap.style.setProperty('--px',0);sphereWrap.style.setProperty('--py',0);});
+  }
+  /* magnetic buttons + ripple */
+  document.querySelectorAll('.btn').forEach(b=>{
+    b.addEventListener('pointermove',e=>{
+      if(e.pointerType==='touch')return;
+      const r=b.getBoundingClientRect();
+      b.style.transform='translate('+((e.clientX-r.left-r.width/2)*.16)+'px,'+((e.clientY-r.top-r.height/2)*.26)+'px)';
+    });
+    b.addEventListener('pointerleave',()=>{b.style.transform='';});
+    b.addEventListener('click',e=>{
+      const r=b.getBoundingClientRect(),d=document.createElement('span');
+      d.className='ripple';d.style.left=(e.clientX-r.left-8)+'px';d.style.top=(e.clientY-r.top-8)+'px';d.style.width=d.style.height='16px';
+      b.appendChild(d); setTimeout(()=>d.remove(),650);
+    });
+  });
+}
+
+/* marquee content */
+const c1=["Summarize this article","Explain recursion simply","Write a thank-you note","Debug my JS error","Plan a weekend trip","Translate to Hindi","Quiz me on biology","Draft a cover letter"];
+const c2=["Beginner workout plan","Explain photosynthesis","Rewrite this email politely","Name my startup","Make a study timetable","Compare two laptops","Write a short story","Fix my Python loop"];
+const mk=(id,arr)=>{const t=document.getElementById(id);t.innerHTML=arr.map(x=>'<span class="pchip">'+x+'</span>').join('');t.innerHTML+=t.innerHTML;};
+mk('t1',c1); mk('t2',c2);
+
+/* phone chat demo */
+const pm=document.getElementById('phoneMsgs');
+const convos=[
+  {q:"What can you help me with?",a:"I can explain ideas, help you write, plan your day, or just chat — whatever you need."},
+  {q:"Explain gravity like I'm 10.",a:"Gravity is the pull that makes things fall. Bigger objects like Earth pull harder, so you stay on the ground."},
+  {q:"Help me plan my evening.",a:"Sure — want something relaxing, productive, or a mix of both?"}
+];
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+function bubble(cls,text=''){const d=document.createElement('div');d.className='msg '+cls;d.textContent=text;pm.appendChild(d);return d;}
+async function playPhone(){
+  let i=0;
+  while(true){
+    const c=convos[i%convos.length]; i++;
+    pm.innerHTML='';
+    bubble('me',c.q);
+    await sleep(500);
+    const t=bubble('ai'); t.innerHTML='<span class="typing"><span></span><span></span><span></span></span>';
+    await sleep(1200);
+    t.innerHTML=''; t.classList.add('caret');
+    const words=c.a.split(' ');
+    for(const w of words){ t.firstChild? t.lastChild.textContent+=' '+w : t.append(w); await sleep(65+Math.random()*55); }
+    t.classList.remove('caret');
+    await sleep(3000);
+  }
+}
+if(reduce){ bubble('me',convos[0].q); bubble('ai',convos[0].a); } else { playPhone(); }
+
+/* benefits carousel (cosmetic prev/next swap) */
+const sets=[
+  [["Hey Dialo, what are the 3 main benefits of chatting with an AI assistant?","me"],
+   ["Sure! Here are the top three:<ol><li>Personalized help, any time of day</li><li>Fast, clear explanations on hard topics</li><li>A private space to think things through</li></ol>","ai"],
+   ["That sounds great — can Dialo help with my studies too?","me"],
+   ["You're welcome! Remember, Dialo is here to support your learning, work and everyday questions, big or small. 🌿","ai"]],
+  [["Can Dialo help me write better emails?","me"],
+   ["Absolutely — share a draft and I'll tighten the tone, fix clarity, and keep your voice.","ai"],
+   ["What about brainstorming ideas?","me"],
+   ["I can throw out options fast, then help you narrow down the best one.","ai"]],
+  [["Is my conversation with Dialo private?","me"],
+   ["You can use a temporary chat that's never saved, or a saved chat you control fully.","ai"],
+   ["Good to know. Can I export my chats?","me"],
+   ["Yes — download or copy any conversation whenever you like.","ai"]]
+];
+let benIdx=0;
+const benRight=document.querySelector('.ben-right'),benCount=document.querySelector('.ben-count'),benNum=document.querySelector('.ben-left .mono');
+function renderBen(dir){
+  const card=document.getElementById('benefitsCard');
+  card.classList.remove('in'); void card.offsetWidth;
+  benRight.querySelectorAll('.bmsg').forEach(m=>m.remove());
+  sets[benIdx].forEach(([text,cls])=>{const d=document.createElement('div');d.className='bmsg '+cls;d.innerHTML=text;benRight.appendChild(d);});
+  benNum.textContent='0'+(benIdx+1)+'/10';
+  requestAnimationFrame(()=>card.classList.add('in'));
+}
+document.getElementById('benNext').addEventListener('click',()=>{benIdx=(benIdx+1)%sets.length;renderBen();});
+document.getElementById('benPrev').addEventListener('click',()=>{benIdx=(benIdx-1+sets.length)%sets.length;renderBen();});
+</script>
+</body>
+</html>
